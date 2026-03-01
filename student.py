@@ -1,203 +1,104 @@
 #Student Management System
+import pandas as pd 
+import matplotlib.pyplot as plt
+
+filename=input("enter filename : ")
+try:
+   df=pd.read_csv(filename)
+except FileNotFoundError:
+   df=pd.DataFrame(columns=['name','roll','marks'])
+   df.to_csv(filename,index=False)
+
+
 class College:
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self):
+        global df
+        self.df=df
 
-    def add_student(self):
-        name = input("Enter name: ")
-        roll = input("Enter roll no: ")
-        marks = input("Enter marks: ")
+    def save(self):
+       self.df.to_csv(filename,index=False)
+        
+    def add_student(self,name,roll,marks):
+       name = input("Enter name: ")
+       roll = int(input("Enter roll: "))
+       marks = int(input("Enter marks: "))
+       
+       new_row = pd.DataFrame([[name, roll, marks]],
+                               columns=["name", "roll", "marks"])
+       
+       self.df = pd.concat([self.df, new_row], ignore_index=True)
+       self.save()
+       print("Student added successfully!")
 
-        with open(self.filename, "a") as f:
-            f.write(f"{name},{roll},{marks}\n")
-
-        print("Student added successfully!")
 
     def show_students(self):
-        try:
-            with open(self.filename, "r") as f:
-             print("\nStudent Records:")
-             for line in f:
-                line = line.strip()
-                if not line:
-                    continue   # skip empty lines
-
-                parts = line.split(",")
-                if len(parts) != 3:
-                    print("Corrupted record:", line)
-                    continue
-
-                name, roll, marks = parts
-                print(f"Name: {name}, Roll: {roll}, Marks: {marks}")
-
-        except FileNotFoundError:
-            print("File not found. No records yet.")
+       print(self.df)
     
     def search_student(self):
-        name_to_search = input("Enter name to search: ")
-        found = False
-        try:
-            with open(self.filename, "r") as f:
-             for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                parts = line.split(",")
-                if len(parts) != 3:
-                    continue
-
-                name, roll, marks = parts
-                if name == name_to_search:
-                    print(f"Found → Name: {name}, Roll: {roll}, Marks: {marks}")
-                    found = True
-                    break
-            if not found:
-                print("Student not found")
-        except FileNotFoundError:
-         print("File not found.")
-        
+        name=input("enter name to search ")
+        result = self.df[self.df["name"] == name]
+        print(result if not result.empty else "Student not found")
 
     def delete_student(self):
-        roll_no_tosearch=input("enter roll number to search")
-        found=False
-        try:
-            with open(self.filename, "r") as f:
-             lines = f.readlines()
-
-            with open(self.filename, "w") as f:
-              for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-
-                name, roll, marks = line.split(",")
-
-                if roll == roll_no_tosearch:
-                    found = True   # skip this line (delete it)
-                else:
-                    f.write(line + "\n")
-
-            if found:
-                print("student deleted succesfully")
-            else:
-                print("roll number not found")
+        roll_no=int(input("enter roll no to delete"))
+        self.df = self.df[self.df["roll"] != roll_no]
+        self.save()
+        print("student deleted if existed")
 
         
-        except FileNotFoundError:
-            print("file not found")
 
     def update_marks(self):
-        roll_no_tosearch=input("enter roll number to search ")
-        update_marks=int(input("enter marks u wanna update "))
-        found=False
-        try:
-            with open(self.filename, "r") as f:
-                lines = f.readlines()
-
-            with open(self.filename, "w") as f:
-             for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-
-                parts = line.split(",")
-                if len(parts) != 3:
-                    continue
-
-                name, roll, marks = parts
-
-                if roll == roll_no_tosearch:
-                    f.write(f"{name},{roll},{update_marks}\n")
-                    found = True
-                else:
-                    f.write(f"{name},{roll},{marks}\n")
-                
-
-            if found:
-               print("Marks updated successfully")
-            else:
-                print("roll number not found")
-        
-        except FileNotFoundError:
-            print("file not found")
+       roll_no=int(input("enter roll no to update marks"))
+       new_marks=int(input("enter new marks to update "))
+       self.df.loc[self.df["roll"] == roll_no, "marks"] = new_marks
+       self.save()
+       print("marks updated")
+  
 
 
     def grade_check(self):
-        students = []
-        total_marks = 0
-        total_students = 0
-        highest = None
-        lowest = None
-
-        try:
-          with open(self.filename, "r") as f:
-              for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-
-                parts = line.split(",")
-                if len(parts) != 3:
-                    continue
-
-                name, roll, marks = parts
-
-                try:
-                    marks = int(marks)
-                except:
-                    continue
-
-                if marks < 0 or marks > 100:
-                    continue
-
-                students.append([name, roll, marks])
-                total_students += 1
-                total_marks += marks
-
-                if highest is None or marks > highest:
-                    highest = marks
-                if lowest is None or marks < lowest:
-                    lowest = marks
-            
-          if total_students == 0:
-            print("No valid student records found")
+        if self.df.empty:
+            print("no data")
             return
-          
-          average = total_marks / total_students
-          print("Total students:", total_students)
-          print("Average:", average)
-          
-          print("\nAll Toppers:")
-          for name, roll, marks in students:
-            if marks == highest:
-               print(f"{name} ({roll}) = {marks}")
-               print("\nAll Lowest Scorers:")
-            for name, roll, marks in students:
-             if marks == lowest:
-                print(f"{name} ({roll}) = {marks}")
+        
+        print("Highest  marks: ",self.df['marks'].max())
+        print("Average marks: ",self.df['marks'].mean())
+        print("Lowest marks: ",self.df['marks'].min())
 
-            print("\nGrades:")
-            for name, roll, marks in students:
-                if marks >= 90:
-                    grade = "A"
-                    print(f"{name} ({roll}) = {grade}")
-                elif marks >= 80:
-                    grade = "B"
-                    print(f"{name} ({roll}) = {grade}")
-                elif marks >= 70:
-                   grade = "C"
-                   print(f"{name} ({roll}) = {grade}")
-                elif marks >= 60:
-                   grade = "D"
-                   print(f"{name} ({roll}) = {grade}")
-                else:
-                  grade = "FAIL"
-                  print(f"{name} ({roll}) = {grade}")
-            
 
-        except FileNotFoundError:
-           print("File not found")
+        self.df['grade']=pd.cut(
+            self.df['marks'],
+            bins=[0,60,70,80,90,100],
+            labels=["Fail",'D',"C",'B',"A"]
+        )
 
+        print("\nGrades: ")
+        print(self.df[['name','roll','marks','grade']])
+
+    def show_graps(self):
+        if self.df.empty:
+            print("no data")
+            return
+        
+
+        #bar chart of marks
+        plt.figure()
+        plt.bar(self.df['name'],self.df['marks'])
+        plt.xlabel("students")
+        plt.ylabel("marks")
+        plt.title("marks of student")
+        plt.tight_layout()
+        plt.show()
+
+
+        #histogram of marks
+        plt.figure()
+        self.df['marks'].plot(kind='hist',bins=5)
+        plt.xlabel("marks")
+        plt.ylabel("number of students")
+        plt.title("distribution of marks")
+        plt.tight_layout()
+        plt.show()
 
 
     def menu(self):
@@ -208,7 +109,8 @@ class College:
             print("4. delete student")
             print("5.update marks ")
             print("6.grade checking ")
-            print("7. Exit")
+            print("7.show graphs")
+            print("8. Exit")
 
             choice = input("Enter choice: ")
 
@@ -225,11 +127,12 @@ class College:
             elif choice=="6":
                 self.grade_check()
             elif choice=="7":
-                exit
+                self.show_graps()
+            elif choice=="8":
+                break
             else:
                 print("Invalid choice")
 
 
-filename = input("Enter filename: ")
-c = College(filename)
+c=College()
 c.menu()
