@@ -1,4 +1,4 @@
-# Student-Management-System--Python++pandas+Matplotlib
+# Student-Management-System--Python+pandas+Matplotlib
 
 A menus-driven student management system 
 
